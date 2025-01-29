@@ -149,6 +149,12 @@ elif st.session_state.show_second_map and not st.session_state.show_third_map:
             st.session_state.show_second_map = False
             st.session_state.show_third_map = True
             st.rerun()
+
+        # Bouton pour revenir à la première carte
+    if st.button("Retour à la carte de France"):
+        st.session_state.show_second_map = False
+        st.session_state.show_third_map = False
+        st.rerun()
 else :
             
     # Affichage de la troisième carte
@@ -205,5 +211,10 @@ else :
     # Bouton pour revenir à la première carte
     if st.button("Retour à la carte de France"):
         st.session_state.show_second_map = False
+        st.session_state.show_third_map = False
         st.rerun()
-
+    # Bouton pour revenir à la deuxième carte
+    if st.button("Retour à la carte du département"):
+        st.session_state.show_second_map = True
+        st.session_state.show_third_map = False
+        st.rerun()
