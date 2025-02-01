@@ -81,7 +81,7 @@ st.title("Carte interactive")
 if not st.session_state.show_second_map and not st.session_state.show_third_map:
     location_IDF = st.session_state.location_IDF
     # Affichage de la première carte
-    m = folium.Map(location=location_IDF, zoom_start=10)
+    m = folium.Map(location=location_IDF, zoom_start=8)
 
     folium.GeoJson(
         dep,
@@ -97,9 +97,10 @@ if not st.session_state.show_second_map and not st.session_state.show_third_map:
             sticky=True
         ),
         style_function=lambda x: {
+            'fillColor': 'grey',
             'color': 'black',
             'weight': 1,
-            'fillOpacity': 0,
+            'fillOpacity': 0.6,
         }
     ).add_to(m)
 
@@ -146,9 +147,10 @@ elif st.session_state.show_second_map and not st.session_state.show_third_map:
     # Ajouter la qualité au GeoJSON
     qual_dep_last = st.session_state.qual_dep_last
     qual_dep_historique = st.session_state.qual_dep_historique
+
     for feature in communes['features']:
         communes_code = feature['properties']['code']
-        if communes_code == str(qual_dep_last['code_commune'].iloc[0]):
+        for com in qual_dep_last['code_commune'].values:
             feature['properties']['Conclusion_Qualite'] = qual_dep_last['conclusion_conformite_prelevement'].iloc[0].strip().replace('.','')	
             feature['properties']['conformite_limites_bact_prelevement'] = qual_dep_last['conformite_limites_bact_prelevement'].iloc[0].strip().replace('.','')
             feature['properties']['conformite_limites_pc_prelevement'] = qual_dep_last['conformite_limites_pc_prelevement'].iloc[0].strip().replace('.','')
@@ -171,7 +173,7 @@ elif st.session_state.show_second_map and not st.session_state.show_third_map:
         location_centroid_dep_select = [centroid_select['latitude'], centroid_select['longitude']]
 
         # Génération de la nouvelle carte m2
-        m2 = folium.Map(location=location_centroid_dep_select, zoom_start=9)
+        m2 = folium.Map(location=location_centroid_dep_select, zoom_start=11)
 
         # Ajouter le département sélectionné
         folium.GeoJson(
@@ -327,12 +329,24 @@ else :
         popup = folium.Popup(iframe, max_width=600)
 
 
-        folium.Marker(location=location, popup=popup, icon=folium.Icon(color='purple', icon="info-sign")).add_to(m3)
+        folium.Marker(location=location_centroid_commune_select, popup=popup, icon=folium.Icon(color='purple', icon="info-sign")).add_to(m3)
 
         folium.LayerControl().add_to(m3)
 
+    output3 = st_folium(m3, width=700, height=500)
     
-    st_folium(m3, width=700, height=500)
+
+    # récupération des infos du clic
+    if output3 and output3.get("last_object_clicked_tooltip"):
+        st.write(output3.get("last_object_clicked_tooltip"))
+            
+        commune_clic = output3.get("last_object_clicked_tooltip").split(' ')[25].strip()
+        
+        st.session_state.commune_clic = commune_clic
+        st.session_state.show_second_map = False
+        st.session_state.show_third_map = True
+        st.rerun()
+
 
 
     # Bouton pour revenir à la première carte
