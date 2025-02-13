@@ -34,7 +34,7 @@ def my_color_function(qualite_generale):
     }
     return color_map.get(qualite_generale, "blue")
 
-
+@st.cache_data
 def color_texte_qualite(qualite):
     if qualite == "Conforme aux limites et aux références":
         color = "#10fb04"
@@ -52,6 +52,8 @@ def color_texte_qualite(qualite):
         color = 'black'
     return color
 
+
+@st.cache_data
 def extract_coordinates(geometry):
     if geometry['type'] == 'Polygon':
         return geometry['coordinates'][0]
@@ -60,6 +62,8 @@ def extract_coordinates(geometry):
     else:
         return []
 
+
+@st.cache_data
 def calculate_centroid(coordinates):
     if not coordinates:
         return None
@@ -68,6 +72,8 @@ def calculate_centroid(coordinates):
     count = len(coordinates)
     return [y_sum / count, x_sum / count]  # [latitude, longitude]
 
+
+@st.cache_data
 def historique_commune(df, commune):   
     # Filtrer les données pour la commune en cours
     data = df[df['code_commune'].astype(str) == str(commune)]
@@ -93,6 +99,7 @@ def historique_commune(df, commune):
     return date_nc_lim,date_nc_ref
 
 
+@st.cache_data
 def prix_commune(tarif_dep_2023, commune_clic):
     tarif_com_2023 = tarif_dep_2023[tarif_dep_2023['Code INSEE'] == int(commune_clic)]
     
@@ -114,6 +121,7 @@ def prix_commune(tarif_dep_2023, commune_clic):
     return prix_aep_com, prix_ac_com, prix_total_com
 
 
+@st.cache_data
 def graph_prix(dep, commune):
     tarif_dep = pd.read_csv(f'export/tarif_dep{dep}.csv', sep=";")
     tarif_com = tarif_dep[tarif_dep['Code INSEE']== int(commune)]
@@ -134,6 +142,13 @@ def graph_prix(dep, commune):
         legend=dict(title="Légende")
 )
     return fig
+
+
+@st.cache_data
+def prelevement_com(dep,commune):
+    prelevement_idf_dep = pd.read_csv(f"export/prelevement_idf{dep}.csv", sep=";")
+    prelevement_com = prelevement_idf_dep[prelevement_idf_dep['Code INSEE'] == int(commune)]
+    return prelevement_com
 
 
 
@@ -416,7 +431,10 @@ elif st.session_state.show_details:
     prix_ac_com = st.session_state.prix_ac_com
     prix_total_com = st.session_state.prix_total_com
 
+
     graph = graph_prix(dep_clic, commune_clic)
+
+    prelevement = prelevement_com(dep_clic, commune_clic)
 
     # st.write(commune_select)
 
@@ -436,10 +454,17 @@ elif st.session_state.show_details:
     st.write(f"❗ **Dernier prélèvement non conforme aux références :** {date_nc_ref[:10]}")
 
     # Afficher les prix
+    st.markdown(f"<h3 >💰 Prix de l'eau</h3>", unsafe_allow_html=True)
     st.write(f"💰 **Prix Eau potable :** {prix_aep_com} €")
     st.write(f"💰 **Prix Assainissement :** {prix_ac_com} €")
     st.write(f"💰 **Prix Total :** {prix_total_com} € (hors taxes et redevances)")
     st.plotly_chart(graph)
+
+
+    # Afficher les prélèvements
+    st.markdown(f"<h3 >💰 Prélèvement en eau sur la commune</h3>", unsafe_allow_html=True)
+    st.write(prelevement)
+
 
     # Ajouter un bouton de retour à la carte
     if st.button("🔙 Retour à la carte des communes"):
