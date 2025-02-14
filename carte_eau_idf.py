@@ -8,6 +8,7 @@ import plotly.express as pk
 import seaborn as sns
 import matplotlib.pyplot as plt
 import plotly.graph_objects as go
+import requests
 
 
 # Caching des données
@@ -146,9 +147,17 @@ def graph_prix(dep, commune):
 
 @st.cache_data
 def prelevement_com(dep,commune):
-    prelevement_idf_dep = pd.read_csv(f"export/prelevement_idf{dep}.csv", sep=";")
+    prelevement_idf_dep = pd.read_csv(f"export/prelevement_idf_last{dep}.csv", sep=";")
     prelevement_com = prelevement_idf_dep[prelevement_idf_dep['Code INSEE'] == int(commune)]
     return prelevement_com
+
+
+@st.cache_data
+def contour_commune(code_insee):
+    link_commune = f"https://geo.api.gouv.fr/communes?code={code_insee}&fields=nom,code,codesPostaux,siren,codeEpci,codeDepartement,codeRegion,population&format=geojson&geometry=contour"
+    reponse_com = requests.get(link_commune)
+    contour_com = reponse_com.json()
+    return contour_com 
 
 
 
@@ -179,7 +188,7 @@ dep, communes_data = load_all_data()
 
 # Initialisation de l'état de session
 for key in ['show_second_map', 'show_third_map', 'dep_clic', 'qual_dep_last', 'qual_dep_historique', 
-            'communes_idf_dep', 'dep_select', 'commune_clic', 'commune_select', 'location_IDF','show_details','prix_aep_com', 'prix_ac_com', 'prix_total_com' ]:
+            'communes_idf_dep', 'dep_select', 'commune_clic', 'commune_select','commune_select2','location_centroid_commune_select', 'location_IDF','show_details','prix_aep_com', 'prix_ac_com', 'prix_total_com','prelevement']:
     if key not in st.session_state:
         st.session_state[key] = None
 if "show_first_map" not in st.session_state:
@@ -262,9 +271,29 @@ elif st.session_state.show_second_map :
     ).add_to(m2)
 
 
-
+    m2.save("test_map.html")
     folium.LayerControl().add_to(m2)
     output2 = st_folium(m2, width=700, height=500)
+
+    #Légende
+    st.markdown("""
+    <div style="position: fixed;
+                top: 50%; right: 15%; width: 260px; height: auto;
+                background-color: white; z-index:9999; font-size:14px;
+                border:2px solid grey; padding: 10px; border-radius: 5px;
+                transform: translateY(-50%);">
+    <b>Légende des couleurs</b><br>
+    <i style="background:#10fb04;width:12px;height:12px;display:inline-block;margin-right:5px;"></i> Conforme aux limites et aux références<br>
+    <i style="background:#c3fb04;width:12px;height:12px;display:inline-block;margin-right:5px;"></i> Dérogation + Conforme aux références<br>
+    <i style="background:#e1fb04;width:12px;height:12px;display:inline-block;margin-right:5px;"></i> Dérogation + Non conforme aux références<br>
+    <i style="background:#8efb04;width:12px;height:12px;display:inline-block;margin-right:5px;"></i> Conforme aux limites, non conforme aux références<br>
+    <i style="background:#fbb804;width:12px;height:12px;display:inline-block;margin-right:5px;"></i> Non conforme aux limites, conforme aux références<br>
+    <i style="background:#fb0f04;width:12px;height:12px;display:inline-block;margin-right:5px;"></i> Non conforme aux limites et aux références<br>
+    </div>
+    """, unsafe_allow_html=True)
+
+
+
 
     if output2 and output2.get("last_object_clicked"):
         commune_clic = output2.get("last_object_clicked_tooltip").split(' ')[25].strip()
@@ -289,9 +318,10 @@ elif not st.session_state.show_first_map and not st.session_state.show_second_ma
 
     commune_select = next(feature for feature in communes_idf_dep['features'] if feature['properties']['code'] == commune_clic)
     st.session_state.commune_select = commune_select
+   
     location_centroid_commune_select = [commune_select['properties']['centroid']['latitude'], 
                                         commune_select['properties']['centroid']['longitude']]
-
+    st.session_state.location_centroid_commune_select = location_centroid_commune_select
 
     tarif_dep_2023 = st.session_state.tarif_dep_2023
     tarif_com_2023 = tarif_dep_2023[tarif_dep_2023['Code INSEE']==int(commune_clic)]
@@ -301,6 +331,9 @@ elif not st.session_state.show_first_map and not st.session_state.show_second_ma
     st.session_state.prix_aep_com = prix_aep_com
     st.session_state.prix_ac_com = prix_ac_com
     st.session_state.prix_total_com = prix_total_com
+
+    commune = contour_commune(commune_clic)
+    st.session_state.commune = commune
 
 
 
@@ -346,6 +379,16 @@ elif not st.session_state.show_first_map and not st.session_state.show_second_ma
             'fillOpacity': 0.8,
         }
     ).add_to(m3)
+
+    folium.GeoJson(
+        commune,
+        tooltip=folium.GeoJsonTooltip(
+            fields=['code', 'nom'],
+            aliases=['Code INSEE:', 'Nom:'],
+            style="background-color: white; border: 2px solid black; border-radius: 3px; box-shadow: 3px;",
+            sticky=True
+        )
+    ).add_to(m3)
     # qualite = commune_select['properties'].get('qualite_generale', 'Non disponible')
     couleur = color_texte_qualite(commune_select['properties'].get('qualite_generale', 'Non disponible'))
     # st.write(couleur)
@@ -361,18 +404,12 @@ elif not st.session_state.show_first_map and not st.session_state.show_second_ma
     <p> {commune_select['properties'].get('com_qualite', 'Non disponible')}</p>
     <h2>Conformité aux limites de qualité</h2>
     <p style="font-size:14px">Si les limites sont dépassées, il y a un risque pour la santé humaine</p>
-    <p style="font-size:18px"> Confor   mité bactériologique : {commune_select['properties'].get('conformite_limites_bact_prelevement', 'Non disponible')}</p>
+    <p style="font-size:18px"> Conformité bactériologique : {commune_select['properties'].get('conformite_limites_bact_prelevement', 'Non disponible')}</p>
     <p style="font-size:18px"> Conformité chimique : {commune_select['properties'].get('conformite_limites_pc_prelevement', 'Non disponible')}</p>
     <h2>Conformité aux références de qualité</h2>
     <p style="font-size:14px">Si les références sont dépassées, il y a aucun risque pour la santé humaine mais cela met un évidence un disfonctionnement et peut entrainer des désagréments</p>
     <p style="font-size:18px"> Conformité bactériologique: {commune_select['properties'].get('conformite_references_bact_prelevement', 'Non disponible')}</p>
     <p style="font-size:18px"> Conformité chimique : {commune_select['properties'].get('conformite_references_pc_prelevement', 'Non disponible')}</p>
-
-    <h2>Prix de l'eau</h2>
-    <p>Prix Eau potable : {prix_aep_com}</p>
-    <p>Prix Assainissement : {prix_ac_com}</p>
-    <p>Prix Total : {prix_total_com} (hors taxes et redevances)</p>
-
    
     """
 
@@ -382,15 +419,36 @@ elif not st.session_state.show_first_map and not st.session_state.show_second_ma
 
 
     folium.Marker(location=location_centroid_commune_select, popup=popup, icon=folium.Icon(color='purple', icon="info-sign")).add_to(m3)
+    
 
     folium.LayerControl().add_to(m3)
 
+
     output3 = st_folium(m3, width=700, height=500)
+
+    #Légende
+    st.markdown("""
+    <div style="position: fixed;
+                top: 50%; right: 15%; width: 260px; height: auto;
+                background-color: white; z-index:9999; font-size:14px;
+                border:2px solid grey; padding: 10px; border-radius: 5px;
+                transform: translateY(-50%);">
+    <b>Légende des couleurs</b><br>
+    <i style="background:#10fb04;width:12px;height:12px;display:inline-block;margin-right:5px;"></i> Conforme aux limites et aux références<br>
+    <i style="background:#c3fb04;width:12px;height:12px;display:inline-block;margin-right:5px;"></i> Dérogation + Conforme aux références<br>
+    <i style="background:#e1fb04;width:12px;height:12px;display:inline-block;margin-right:5px;"></i> Dérogation + Non conforme aux références<br>
+    <i style="background:#8efb04;width:12px;height:12px;display:inline-block;margin-right:5px;"></i> Conforme aux limites, non conforme aux références<br>
+    <i style="background:#fbb804;width:12px;height:12px;display:inline-block;margin-right:5px;"></i> Non conforme aux limites, conforme aux références<br>
+    <i style="background:#fb0f04;width:12px;height:12px;display:inline-block;margin-right:5px;"></i> Non conforme aux limites et aux références<br>
+    </div>
+    """, unsafe_allow_html=True)
+
 
     if output3 and output3.get("last_object_clicked_tooltip"):
         commune_clic = output3.get("last_object_clicked_tooltip").split(' ')[25].strip()
         st.session_state.commune_clic = commune_clic
-        # st.session_state.show_details = False  # Activer l'affichage des détails
+        st.session_state.commune_select = next(feature for feature in communes_idf_dep['features'] if feature['properties']['code'] == commune_clic)
+        st.session_state.commune = contour_commune(commune_clic)
         st.session_state.show_first_map = False
         st.session_state.show_second_map = False
         st.session_state.show_third_map = False
@@ -398,6 +456,9 @@ elif not st.session_state.show_first_map and not st.session_state.show_second_ma
         st.rerun()
 
     if st.button("Voir les détails de la commune"):
+        st.session_state.commune_clic = commune_clic
+        st.session_state.commune = commune
+
         st.session_state.show_first_map = False
         st.session_state.show_second_map = False
         st.session_state.show_third_map = False
@@ -405,7 +466,7 @@ elif not st.session_state.show_first_map and not st.session_state.show_second_ma
         st.rerun()
 
     if st.button("Retour à la carte de la région Ile-de-France"):
-        st.session_state.show_first_map = False
+        st.session_state.show_first_map = True
         st.session_state.show_second_map = False
         st.session_state.show_third_map = False
         st.session_state.show_details = False
@@ -430,11 +491,15 @@ elif st.session_state.show_details:
     prix_aep_com = st.session_state.prix_aep_com
     prix_ac_com = st.session_state.prix_ac_com
     prix_total_com = st.session_state.prix_total_com
-
+    communes_idf_dep = st.session_state.communes_idf_dep
+    location_centroid_commune_select = st.session_state.location_centroid_commune_select
+    commune = st.session_state.commune
 
     graph = graph_prix(dep_clic, commune_clic)
 
     prelevement = prelevement_com(dep_clic, commune_clic)
+    st.session_state.prelevement = prelevement
+    
 
     # st.write(commune_select)
 
@@ -449,6 +514,15 @@ elif st.session_state.show_details:
     st.write(f"📅 **Dernier prélèvement :** {commune_select['properties'].get('date_prelevement', 'Non disponible')[:10]}")
     st.write(f"📝 **Commentaire :** {commune_select['properties'].get('com_qualite', 'Non disponible')}")
 
+    st.markdown(f"<h4>Conformité aux limites de qualité</h4>", unsafe_allow_html=True)
+    st.write(f"Si les limites sont dépassées, il y a un risque pour la santé humaine")
+    st.markdown(f"<h5 style='font-size:18px'> Conformité bactériologique : {commune_select['properties'].get('conformite_limites_bact_prelevement', 'Non disponible')}</h5>", unsafe_allow_html=True)
+    st.markdown(f"<h5 style='font-size:18px'> Conformité chimique : {commune_select['properties'].get('conformite_limites_pc_prelevement', 'Non disponible')}</h5>", unsafe_allow_html=True)
+    st.markdown(f"<h4>Conformité aux références de qualité</h4>", unsafe_allow_html=True)
+    st.markdown(f"Si les références sont dépassées, il y a aucun risque pour la santé humaine mais cela met un évidence un disfonctionnement et peut entrainer des désagréments", unsafe_allow_html=True)
+    st.markdown(f"<h5 style='font-size:18px'> Conformité bactériologique: {commune_select['properties'].get('conformite_references_bact_prelevement', 'Non disponible')}</h5>", unsafe_allow_html=True)
+    st.markdown(f"<h5 style='font-size:18px'> Conformité chimique : {commune_select['properties'].get('conformite_references_pc_prelevement', 'Non disponible')}</h5>", unsafe_allow_html=True)
+
     # Afficher les historiques
     st.write(f"🚫 **Dernier prélèvement non conforme aux limites :** {date_nc_lim[:10]}")
     st.write(f"❗ **Dernier prélèvement non conforme aux références :** {date_nc_ref[:10]}")
@@ -462,8 +536,75 @@ elif st.session_state.show_details:
 
 
     # Afficher les prélèvements
-    st.markdown(f"<h3 >💰 Prélèvement en eau sur la commune</h3>", unsafe_allow_html=True)
-    st.write(prelevement)
+    st.markdown(f"<h3 >💉 Prélèvements en eau sur la commune</h3>", unsafe_allow_html=True)
+    st.text('Dernière année disponible')
+    # st.write(prelevement)
+
+
+    
+    
+    location_mc = commune_select['properties']['centroid']['latitude'], commune_select['properties']['centroid']['longitude']
+ 
+
+    mc = folium.Map(location=location_mc, zoom_start=12)  
+
+    folium.GeoJson(
+        commune,
+        tooltip=folium.GeoJsonTooltip(
+            fields=['code', 'nom'],
+            aliases=['Code INSEE:', 'Nom:'],
+            style="background-color: white; border: 2px solid black; border-radius: 3px; box-shadow: 3px;",
+            sticky=True
+        )
+    ).add_to(mc)
+
+
+    
+    if not prelevement.empty:
+        for _, c in prelevement.iterrows():
+            liste_prel = prelevement[(prelevement['Latitude']== c['Latitude'])&(prelevement['Longitude']== c['Longitude'])]
+            if not liste_prel.empty:
+                # Construire un tableau HTML pour le popup
+                popup_content = f"""
+                <h3>Informations sur le prélèvement</h3>
+                <table border="1" style="width:100%; border-collapse: collapse;">
+                    <tr>
+                        <th>Ouvrage</th>
+                        <th>Volume</th>
+                        <th>Usage</th>
+                        <th>Fiche</th>
+                    </tr>
+                """
+
+                for _, row in liste_prel.iterrows():
+                    popup_content += f"""
+                    <tr>
+                        <td>{row['Ouvrage']}</td>
+                        <td>{row['Volume'] if pd.notna(row['Volume']) else "Non disponible"}</td>
+                        <td>{row['Usage'] if pd.notna(row['Usage']) else "Non disponible"}</td>
+                        <td><a href="{row['url_fiche']}" target="_blank">Voir</a></td>
+                    </tr>
+                    """
+
+                popup_content += "</table>"
+
+            else:
+                popup_content = "<p>Aucun prélèvement trouvé</p>"
+
+            iframep = branca.element.IFrame(html=popup_content, width=500, height=150)
+            popupp = folium.Popup(iframep, max_width=600)
+
+            folium.Marker(
+                location=[c['Latitude'], c['Longitude']],  # Accès direct aux valeurs
+                popup=popupp,  # Chaque popup est unique
+                icon=folium.Icon(color="green")
+            ).add_to(mc)
+    else:
+        st.warning("Aucun prélèvement disponible pour cette commune.")
+
+
+    st_folium(mc, width=700, height=500)
+
 
 
     # Ajouter un bouton de retour à la carte
@@ -472,6 +613,14 @@ elif st.session_state.show_details:
         st.session_state.show_second_map = False
         st.session_state.show_third_map = True
         st.session_state.show_details = False
+        st.session_state.location_centroid_commune_select = False
+        st.session_state.commune = False
+        st.session_state.commune_select = False
+        st.session_state.prix_aep_com = False
+        st.session_state.prix_ac_com = False
+        st.session_state.prix_total_com = False
+        st.session_state.prelevement = False
+
         st.rerun()
 
     if st.button("Retour à la carte de la région Ile-de-France"):
@@ -479,6 +628,13 @@ elif st.session_state.show_details:
         st.session_state.show_second_map = False
         st.session_state.show_third_map = False
         st.session_state.show_details = False
+        st.session_state.location_centroid_commune_select = False
+        st.session_state.commune = False
+        st.session_state.commune_select = False
+        st.session_state.prix_aep_com = False
+        st.session_state.prix_ac_com = False
+        st.session_state.prix_total_com = False
+        st.session_state.prelevement = False
         st.rerun()
 
     if st.button("Retour à la carte du département"):
@@ -486,6 +642,13 @@ elif st.session_state.show_details:
         st.session_state.show_second_map = True
         st.session_state.show_third_map = False
         st.session_state.show_details = False
+        st.session_state.location_centroid_commune_select = False
+        st.session_state.commune = False
+        st.session_state.commune_select = False
+        st.session_state.prix_aep_com = False
+        st.session_state.prix_ac_com = False
+        st.session_state.prix_total_com = False
+        st.session_state.prelevement = False
         st.rerun()
 
 
