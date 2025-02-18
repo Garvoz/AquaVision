@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 import plotly.graph_objects as go
 import requests
 
-
+st.set_page_config( page_title = "AquaVision", page_icon='images/logo.png')
 # Caching des données
 @st.cache_data
 def load_geojson(file_path):
@@ -202,6 +202,7 @@ sidebar_css = """
 <style>
     [data-testid="stSidebar"] {
         background-color: #b4c2c2;
+        background-image: url("https://i.ibb.co/zThZKFrd/image-fond-sidebar.webp");
     }
     .sidebar-custom-title {
         font-size: 24px;
@@ -209,6 +210,8 @@ sidebar_css = """
         color: #1a6384;
         margin-bottom: 10px;
         text-align: center;
+        background-color: #b4c2c2;
+        border-radius:10px;
 
     }
     .sidebar-custom-subtitle {
@@ -217,7 +220,18 @@ sidebar_css = """
         color: #33afd3;
         margin-bottom: 20px;
         text-align: center;
-
+        background-color: #b4c2c2;
+        border-radius:10px;
+    }
+    .sidebar-custom-text{
+        font-size: 14px;
+        font-weight: bold;
+        color: #013b5c;
+        padding : 5px;
+        text-align: center;
+        background-color: #b4c2c2;
+        border-radius:10px;
+        margin : 5px;
     }
 </style>
 """
@@ -225,13 +239,17 @@ custom_header_html_sidebar = """
 <div>
     <div class="sidebar-custom-title">Aquavision</div>
     <div class="sidebar-custom-subtitle">L'eau en Ile-de-France</div>
+    <img src="https://i.ibb.co/gM1nZXdv/logo.png" alt="Aquavision" style="border-radius:15px; margin : 5px;">
+    <div class="sidebar-custom-text">Venez découvrir l'eau près de chez vous</div>
+
+
 </div>
 """
 # Injecter le CSS dans l'application Streamlit
 st.sidebar.markdown(sidebar_css, unsafe_allow_html=True)
 st.sidebar.markdown(custom_header_html_sidebar, unsafe_allow_html=True)
-st.sidebar.image('images/logo.png')
-
+# st.sidebar.image('images/logo.png')
+# st.sidebar.text("Venez découvrir l'eau près de chez vous")
 
 css = """
 <style>
@@ -257,7 +275,16 @@ css = """
         color: #051e34;
         margin-bottom: 20px;
         text-align: left;
+    }
+    [data-testid="stText"]{
+        font-size: 14px;
+        color: #013b5c;
+        padding : 1%;
+        text-align: justify;
+        background-color: #b4c2c2;
+        border-radius:10px;
 
+        
     }
 </style>
 """
@@ -270,7 +297,6 @@ custom_header_html = """
 <div>
     <img src="https://i.ibb.co/zHCTKM7c/Aquavision.png" alt="Aquavision" style="width: auto; height: 150px; display: block; margin: 0 auto;">
     <div class="custom-subtitle">L'eau en Ile-de-France</div>
-    <div class="slogan">Venez découvrir l'eau près de chez vous</div>
 </div>
 """
 
@@ -411,8 +437,7 @@ elif st.session_state.show_second_map :
         st.session_state.show_details = False
         st.rerun()
     
-    st.text("""Les exigences de qualité auxquelles doivent satisfaire les valeurs mesurées pour chaque paramètre sont précisées par le Code de la santé publique, en application de la Directive européenne 98/83/CE relative à la qualité des eaux destinées
-à la consommation humaine.
+    st.text("""Les exigences de qualité auxquelles doivent satisfaire les valeurs mesurées pour chaque paramètre sont précisées par le Code de la santé publique, en application de la Directive européenne 98/83/CE relative à la qualité des eaux destinées à la consommation humaine.
 En France, les exigences de qualité sont classées en deux groupes :
 - des limites de qualité pour les paramètres dont la présence dans l’eau induit des risques immédiats ou à plus ou moins long terme pour la santé de la population. Ces limites de qualité concernent, d’une part, les paramètres microbiologiques et d’autre part, une trentaine de substances indésirables ou toxiques (nitrates, métaux, solvants chlorés, hydrocarbures aromatiques, pesticides, sous-produits de désinfection, etc.).
 - des références de qualité pour une vingtaine de paramètres indicateurs de qualité, témoins du fonctionnement des installations de production et de distribution. Ces substances, qui n’ont pas d’incidence directe sur la santé aux teneurs normalement présentes dans l’eau, peuvent mettre en évidence un dysfonctionnement des installations de traitement ou être à l’origine d’inconfort ou de désagrément pour le consommateur.
