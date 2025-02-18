@@ -1,9 +1,0 @@
-streamlit
-folium
-streamlit-folium
-pandas
-branca
-plotly
-seaborn
-matplotlib
-requests
