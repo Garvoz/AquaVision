@@ -268,11 +268,13 @@ st.markdown(css, unsafe_allow_html=True)
 # Ajouter un titre ou un texte au-dessus du menu via HTML
 custom_header_html = """
 <div>
-    <div class="custom-title">Aquavision</div>
+    <img src="https://i.ibb.co/zHCTKM7c/Aquavision.png" alt="Aquavision" style="width: auto; height: 150px; display: block; margin: 0 auto;">
     <div class="custom-subtitle">L'eau en Ile-de-France</div>
     <div class="slogan">Venez découvrir l'eau près de chez vous</div>
 </div>
 """
+
+
 
 
 st.markdown(custom_header_html, unsafe_allow_html=True)
