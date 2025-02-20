@@ -80,19 +80,20 @@ Tout cela pourra être complété par un dashboard interactif présentant les do
 ## 🏗️ Structure du dépôt
 ```
 AquaVision/
-├── docs/                   # Contient les documents non livrables et images
-│   ├── images/             # Toutes les images utilisées dans le projet
-│   ├── recherche/          # Contient les noteboooks d'extraction et de traitement des données du dashboard
-├── donnees/                # Contient les données du projet assez légères pour y être intégrées
-│   ├── brutes/             # Toutes les données telles qu'elles ont été récupérées 
-│   ├── nettoyees/          # Contient les données une fois qu'elles ont été travaillées
-├── livrables/              # Tout ce qui sera présenté au client
-├── carte_eau_idf.py
-├── prepa_donnees_qualite.ipynb
-├── code_df_api_hubeau.ipynb
-├── export
-├── donnees_geo
-├── images
+├── .streamlit/                      # Fichier config.toml
+├── dashboard/                       # Contient les fichiers utilisés pour réaliser le dashboard
+    ├── images/                      # Toutes les images utilisées dans le dashboard
+    ├── recherche/                   # Contient les noteboooks d'extraction et de traitement des données du dashboard
+    ├── donnees/                     # Contient les données du dashboard assez légères pour y être intégrées
+        ├── brutes/                  # Toutes les données telles qu'elles ont été récupérées 
+        ├── nettoyees/               # Contient les données une fois qu'elles ont été travaillées
+├── donnees_geo/                     # Contient les fichiers geojson utilisés dans le streamlit
+├── export/                          # Contient les fichiers csv utilisés dans le streamlit
+├── images/                          # Contient les images utilisés dans le streamlit
+├── carte_eau_idf.py                 # Fichier streamlit
+├── prepa_donnees_qualite.ipynb      # Transformation des données streamlit
+├── code_df_api_hubeau.ipynb         # Extraction des données streamlit
+├── requirements.txt                 # Fichier requirements pour le streamlit
 ├── LICENSE
 └── README.md 
 
