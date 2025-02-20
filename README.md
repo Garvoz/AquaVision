@@ -74,6 +74,15 @@ Tout cela pourra être complété par un dashboard interactif présentant les do
 
 7. [Création d'un dashboard interactif des données nettoyées](./docs/images/dashboard_aquavision.png)
 
+---
+
+# 🔚 Conclusion
+ 
+L'étude et l'analyse des données sur l'eau en Île-de-France, à travers l'application, mettent en évidence l'importance d'une gestion transparente et efficace des ressources en eau. Grâce à l'utilisation des APIs Hub'Eau et SISPEA, les informations sur la qualité de l'eau, les prélèvements et la tarification sont centralisées et accessibles, permettant ainsi une meilleure compréhension des dynamiques locales.
+Le Système d’Information sur l’Eau (SI Eau) joue un rôle clé dans la collecte et la diffusion des données essentielles pour le suivi de la ressource en eau et l’évaluation des services publics. En assurant une vision globale et en facilitant l'accès à ces données, il contribue à une prise de décision plus éclairée et à une sensibilisation accrue du grand public sur les enjeux de la gestion de l’eau.
+L’eau potable désigne une eau propre à la consommation humaine, répondant à des critères stricts de qualité définis par les autorités sanitaires. Son suivi rigoureux est indispensable pour garantir la santé publique. Parallèlement, l’assainissement regroupe l’ensemble des processus visant à collecter, traiter et évacuer les eaux usées afin de préserver l’environnement et limiter les risques sanitaires.
+L’initiative vise donc à renforcer la transparence, optimiser l'utilisation de l’eau car c’est une ressource limitée et soutenir les politiques publiques en faveur d’une gestion durable de cette ressource vitale. L’intégration de ces données dans des outils interactifs et accessibles, comme le tableau de bord développé, constitue un levier essentiel pour améliorer la gouvernance et la préservation de l’eau en France.
+
 
 ---
 
