@@ -100,6 +100,7 @@ AquaVision/
 ├── export/                          # Contient les fichiers csv utilisés dans le streamlit
 ├── images/                          # Contient les images utilisés dans le streamlit
 ├── carte_eau_idf.py                 # Fichier streamlit
+├── Presentation_Aquavision.pdf      # Slides de présentation du projet
 ├── prepa_donnees_qualite.ipynb      # Transformation des données streamlit
 ├── code_df_api_hubeau.ipynb         # Extraction des données streamlit
 ├── requirements.txt                 # Fichier requirements pour le streamlit
